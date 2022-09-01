@@ -27,7 +27,7 @@ int numThread = 0;
 int n = 0;
 int subtotal = 0;
 int diferencia = 0;
-//Se creara el estructure para cada persona que posee un DPI
+//Se creara el estructure para cada hilo
 struct hilo{
   int limitInf , limitMax , subtotal;
   pthread_t Threadn;
