@@ -17,10 +17,7 @@
 */ 
 #include <iostream>
 #include <stdio.h>
-#include <stdlib.h>
 #include <pthread.h>
-#include <sstream>  // for string streams
-#include <string>  // for string
 using namespace std;
 //Creacion de variables que se utilizaran de manera global
 void *process(void *ptr);
@@ -62,7 +59,7 @@ void *process(void *ptr){
     total = total + subtotal;
     subtotal = 0;
     printf("------------------------------------------\n");
-    pthread_exit(NULL);
+    pthread_exit(nullptr);
 }
 
 int main()
