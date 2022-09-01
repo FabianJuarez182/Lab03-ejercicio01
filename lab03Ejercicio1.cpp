@@ -19,51 +19,90 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <sstream>  // for string streams
+#include <string>  // for string
 using namespace std;
 //Creacion de variables que se utilizaran de manera global
-void *subtotal1(void *ptr);
-void *subtotal2(void *ptr);
+void *process(void *ptr);
 int total = 0;
 int valMax = 0;
 int numThread = 0;
 int n = 0;
+int subtotal = 0;
+int diferencia = 0;
 //Se creara el estructure para cada persona que posee un DPI
 struct hilo{
   int limitInf , limitMax , subtotal;
-  string nameThread;
+  pthread_t Threadn;
 };
+//Funcion para determinar si el numero es primo o no
+bool esPrimo(int numero) {
+    // Casos especiales
+    if (numero == 0 || numero == 1 || numero == 4) return false;
+    for (int x = 2; x < numero / 2; x++) {
+        if (numero % x == 0) return false;
+    }
+    // Si no se pudo dividir por ninguno de los de arriba, sí es primo
+    return true;
+}
+// Funcion para el thread el cual se encarga de encontrar los numeros primos 
+// al final sumarlos y tener un subtotal y sumarlo al total completo
+void *process(void *ptr){
+    hilo *soloHilo;
+    soloHilo = (hilo *) ptr;
+    printf("lim inf: %d\nlim sup: %d\n", soloHilo->limitInf, soloHilo->limitMax);
+    for(int i = soloHilo->limitInf; i <= soloHilo->limitMax; i++){
+        // Casos especiales
+        if (esPrimo(i)){
+            printf("%d\n",i);
+            subtotal = subtotal + i;
+        }
+    }
+    printf("Suma hilo: %d\n",subtotal);
+    total = total + subtotal;
+    subtotal = 0;
+    printf("------------------------------------------\n");
+    pthread_exit(NULL);
+}
 
 int main()
 {
     printf("------------------------------------------\n");
-    cout << "Ingrese el valor máximo: "; //Se pide el valor maximo a ingresar
+    cout << "Ingrese el valor maximo: "; //Se pide el valor maximo a ingresar
     cin >> valMax; // variable en la que se guardara el valor
   
     cout << "Ingrese el numero de threads para realizar el calculo : "; //Se pide el num de threads a ingresar
     cin >> numThread; // variable en la que se guardara el valor
-    
+    hilo hilon[numThread];
     n = valMax/numThread;
     int r = valMax%numThread;
     printf("Cantidad de valores a evaluar por thread: %d y residuo: %d\n", n,r);
     printf("Buscando primos entre 0 y %d . . .\n", valMax);
-    printf("------------------------------------------\n\n");
+    printf("------------------------------------------\n");
     for (int i = 0; i < numThread; i++){
-        struct hilo hilon;
-        hilon.nameThread = "THREAD " + i;
-        pthread_t Threadn;
         if (i == 0){
-            hilon.limitInf = 0;
-            hilon.limitMax = n - 1;
+            hilon[i].limitInf = 0;
+            hilon[i].limitMax = n - 1;
         }
-        if(i!=0 & i+1!=numThread){
-            hilon.limitInf = n * i;
-            hilon.limitMax = n * (i+1);
+        if(i!=0 && i+1!=numThread){
+            hilon[i].limitInf = n * i;
+            hilon[i].limitMax = n * (i+1);
         }
         if (i+1==numThread){
-            int diferencia = valMax - (n * (i+1));
-            hilon.limitInf = n * i;
-            hilon.limitMax = (n * (i+1)) + diferencia;
+            diferencia = valMax - (n * (i+1));
+            hilon[i].limitInf = (n * i);
+            hilon[i].limitMax = (n * (i+1)) + diferencia;
         }
-        printf("lim inf: %d\n lim sup: %d\n",hilon.limitInf, hilon.limitMax);
     }
+    for(int k = 0; k < numThread; k++){
+        cout<<"Thread:" ;
+        printf("%d\n", k);
+        // Se crean los hilos de manera independiente el cual ejecutara la misma funcion
+        pthread_create( &hilon[k].Threadn, NULL, process, (void*) &hilon[k]);
+        // Esperar a que cada thread termine en orden
+        pthread_join(hilon[k].Threadn, NULL);
+    }
+    printf("Suma Total: %d\n",total);
+    pthread_exit(NULL);
+    exit(0);
 }
